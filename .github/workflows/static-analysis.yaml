@@ -161,10 +161,12 @@ jobs:
 
       - name: Upload Issues to SonarQube
         run: |
+          ls -lias
           sonar-scanner \
             -Dsonar.projectKey=techFriday \
-            -Dsonar.sarifReportPaths=results_sarif.sarif
-            -Dsonar.host.url=sonarqube:9000 \
+            -Dsonar.host.url=http://sonarqube:9000 \
             -Dsonar.login=sqp_37363d6fd7941be7da7e6fa9995ee04058c0c368 \
-            -Dsonar.scm.disabled=true
+            -Dsonar.scm.disabled=true \
+            -Dsonar.externalIssuesReportPaths=path/to/your/external-issues.json
+
 
