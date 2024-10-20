@@ -4,6 +4,7 @@ on:
   push:
     branches-ignore:
       - dev
+
 permissions:
   contents: write
   security-events: write  # Ensure the action can upload SARIF results    
@@ -57,7 +58,6 @@ jobs:
         with:
           directory: infra/
           framework: terraform
-          #config_file: aws/CKV_LIST.yaml
           output_format: sarif
           output_file_path: prisma_policies.sarif
         continue-on-error: true
@@ -81,60 +81,48 @@ jobs:
           output_file_path: custom_policies.sarif
         continue-on-error: true
 
-
-
-
-
-
-
   tfsec:
     name: tfsec sarif report
-    runs-on: self-hosted
+    runs-on: ubuntu-latest  # Update to avoid using self-hosted
     needs: tflint
 
     steps:
       - name: Clone repo
         uses: actions/checkout@v3
 
+      - name: Install tfsec
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install.sh | bash
+
       - name: run report
-        uses: aquasecurity/tfsec-sarif-action@v0.1.0
-        with:
-          sarif_file: tfsec.sarif          
+        run: |
+          tfsec --format sarif --out tfsec.sarif .
 
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
         with:
-          # Path to SARIF file relative to the root of the repository
           sarif_file: tfsec.sarif
           category: tfsec
+
   sonarqube:
     name: "SonarQube Analysis"
-    runs-on: self-hosted
+    runs-on: ubuntu-latest  # Update to avoid using self-hosted
     needs: tflint
     steps:
-      - name: Cleanup workspace on Mac
-        run: |
-          rm -rf /Users/alaynfm/Desktop/chuck/runner/actions-runner/_work/*
-
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Install dependencies (skip if already installed on Mac)
-      - name: Install Terraform
+      - name: Install SonarScanner
         run: |
-          brew tap hashicorp/tap
-          brew install hashicorp/tap/terraform
+          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.7.0.2747-linux.zip
+          unzip sonar-scanner.zip
+          export PATH="$PATH:$(pwd)/sonar-scanner-4.7.0.2747-linux/bin"
 
-      # Set up SonarCloud environment
-      - name: Setup SonarCloud
-        uses: SonarSource/sonarcloud-github-action@v2
-        with:
-          projectKey: <your_project_key>
-          organization: <your_organization>
-          token: ${{ secrets.SONAR_TOKEN }}
+      - name: Install Terraform (if required)
+        run: |
+          sudo apt-get update && sudo apt-get install -y terraform
 
-      # Run the SonarCloud scan
-      - name: Run SonarCloud scan
+      - name: Run SonarQube scan
         run: |
           sonar-scanner \
           -Dsonar.organization=<your_organization> \
@@ -142,12 +130,3 @@ jobs:
           -Dsonar.sources=. \
           -Dsonar.host.url=https://sonarcloud.io \
           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-    
-
-
-
-      
-  
-
-
-
