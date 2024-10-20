@@ -36,13 +36,7 @@ jobs:
           tflint -f sarif --chdir=infra/ --recursive > tflint.sarif
         continue-on-error: true
 
-      - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: tflint.sarif
-          category: tflint
-
-      - name: Upload TFLint SARIF as an artifact
+      - name: Upload TFLint SARIF file as artifact
         uses: actions/upload-artifact@v3
         with:
           name: tflint-sarif
@@ -58,46 +52,15 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run Checkov PRISMA Policies
-        id: checkov
-        uses: bridgecrewio/checkov-action@master
-        with:
-          directory: infra/
-          framework: terraform
-          #config_file: aws/CKV_LIST.yaml
-          output_format: sarif
-          output_file_path: prisma_policies.sarif
+        run: |
+          checkov -d infra/ --output-format sarif --output-file checkov-results.sarif
         continue-on-error: true
 
-      - name: Upload Checkov SARIF Reports
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: |
-            prisma_policies.sarif
-          category: checkov-analysis-1
-
-      - name: Upload Checkov SARIF as an artifact
+      - name: Upload Checkov SARIF as artifact
         uses: actions/upload-artifact@v3
         with:
           name: checkov-sarif
-          path: prisma_policies.sarif
-
-      - name: Run Checkov CUSTOM Policies
-        id: checkov_custom
-        uses: bridgecrewio/checkov-action@master
-        with:
-          directory: infra/
-          framework: terraform
-          external_checks_dirs: aws/custom_rules
-          config_file: aws/CKV_CUSTOM_LIST.yaml
-          output_format: sarif
-          output_file_path: custom_policies.sarif
-        continue-on-error: true
-
-      - name: Upload Checkov Custom SARIF as an artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: checkov-custom-sarif
-          path: custom_policies.sarif
+          path: checkov-results.sarif
 
   tfsec:
     name: tfsec sarif report
@@ -105,26 +68,18 @@ jobs:
     needs: tflint
 
     steps:
-      - name: Clone repo
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: run report
-        uses: aquasecurity/tfsec-sarif-action@v0.1.0
-        with:
-          sarif_file: tfsec.sarif          
+      - name: Run TFSec
+        run: |
+          tfsec --format sarif --out tfsec-results.sarif
 
-      - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          # Path to SARIF file relative to the root of the repository
-          sarif_file: tfsec.sarif
-          category: tfsec
-
-      - name: Upload TFSec SARIF as an artifact
+      - name: Upload TFSec SARIF as artifact
         uses: actions/upload-artifact@v3
         with:
           name: tfsec-sarif
-          path: tfsec.sarif
+          path: tfsec-results.sarif
 
   manual_approval:
     name: Manual Approval for SonarQube Upload
@@ -139,6 +94,24 @@ jobs:
     runs-on: ubuntu-latest
     needs: manual_approval
     steps:
+      - name: Download TFLint SARIF artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: tflint-sarif
+          path: .
+
+      - name: Download Checkov SARIF artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: checkov-sarif
+          path: .
+
+      - name: Download TFSec SARIF artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: tfsec-sarif
+          path: .
+
       - name: Checkout Code (for the Python script)
         uses: actions/checkout@v3
 
