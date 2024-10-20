@@ -156,6 +156,7 @@ jobs:
       # Upload the SARIF files to SonarQube via API
       - name: Upload SARIF files to SonarQube
         run: |
+          ls -lias
           curl -u sqp_37363d6fd7941be7da7e6fa9995ee04058c0c368: \
             -F "projectKey=techFriday" \
             -F "report=@tflint.sarif" \
