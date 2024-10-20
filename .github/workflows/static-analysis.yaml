@@ -1,0 +1,153 @@
+name: Static Analysis Pipeline
+
+on:
+  push:
+    branches-ignore:
+      - dev
+permissions:
+  contents: write
+  security-events: write  # Ensure the action can upload SARIF results    
+
+jobs:
+  tflint:
+    runs-on: ubuntu-latest
+    permissions: write-all
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Cache TFLint plugin directory
+        uses: actions/cache@v4
+        with:
+          path: ~/.tflint.d/plugins
+          key: ubuntu-latest-tflint-${{ hashFiles('.tflint.hcl') }}
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.52.0
+
+      - name: Initialize TFLint
+        run: tflint --init
+
+      - name: Run TFLint and generate SARIF report
+        run: |
+          tflint -f sarif --chdir=infra/ --recursive > tflint.sarif
+        continue-on-error: true
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: tflint.sarif
+          category: tflint
+
+  checkov:
+    name: 'Checkov Policies'
+    runs-on: ubuntu-latest
+    needs: tflint
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Run Checkov PRISMA Policies
+        id: checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: infra/
+          framework: terraform
+          #config_file: aws/CKV_LIST.yaml
+          output_format: sarif
+          output_file_path: prisma_policies.sarif
+        continue-on-error: true
+
+      - name: Upload Checkov SARIF Reports
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: |
+            prisma_policies.sarif
+          category: checkov-analysis-1
+
+      - name: Run Checkov CUSTOM Policies
+        id: checkov_custom
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: infra/
+          framework: terraform
+          external_checks_dirs: aws/custom_rules
+          config_file: aws/CKV_CUSTOM_LIST.yaml
+          output_format: sarif
+          output_file_path: custom_policies.sarif
+        continue-on-error: true
+
+
+
+
+
+
+
+  tfsec:
+    name: tfsec sarif report
+    runs-on: self-hosted
+    needs: tflint
+
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v3
+
+      - name: run report
+        uses: aquasecurity/tfsec-sarif-action@v0.1.0
+        with:
+          sarif_file: tfsec.sarif          
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          # Path to SARIF file relative to the root of the repository
+          sarif_file: tfsec.sarif
+          category: tfsec
+  sonarqube:
+    name: "SonarQube Analysis"
+    runs-on: self-hosted
+    needs: tflint
+    steps:
+      - name: Cleanup workspace on Mac
+        run: |
+          rm -rf /Users/alaynfm/Desktop/chuck/runner/actions-runner/_work/*
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Install dependencies (skip if already installed on Mac)
+      - name: Install Terraform
+        run: |
+          brew tap hashicorp/tap
+          brew install hashicorp/tap/terraform
+
+      # Set up SonarCloud environment
+      - name: Setup SonarCloud
+        uses: SonarSource/sonarcloud-github-action@v2
+        with:
+          projectKey: <your_project_key>
+          organization: <your_organization>
+          token: ${{ secrets.SONAR_TOKEN }}
+
+      # Run the SonarCloud scan
+      - name: Run SonarCloud scan
+        run: |
+          sonar-scanner \
+          -Dsonar.organization=<your_organization> \
+          -Dsonar.projectKey=<your_project_key> \
+          -Dsonar.sources=. \
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+    
+
+
+
+      
+  
+
+
+
