@@ -95,7 +95,7 @@ jobs:
           sonar-scanner \
             -Dsonar.projectKey=techFriday \
             -Dsonar.sources=. \
-            -Dsonar.host.url=http://localhost:9000 \
+            -Dsonar.host.url=sonarqube:9000 \
             -Dsonar.login=sqp_37363d6fd7941be7da7e6fa9995ee04058c0c368
 
   tfsec:
