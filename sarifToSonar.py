@@ -1,33 +1,57 @@
 import json
 
-def convert_sarif_to_sonarqube(sarif_file, output_file, engine_id):
+def convert_to_sarif(sarif_file, output_file, engine_id):
     with open(sarif_file, 'r') as f:
         sarif_data = json.load(f)
-    
-    issues = []
+
+    sarif_output = {
+        "version": "2.1.0",
+        "$schema": "http://json.schemastore.org/sarif-2.1.0-rtm.5",
+        "runs": []
+    }
+
+    runs = {
+        "tool": {
+            "driver": {
+                "name": engine_id,  # Engine name (e.g., Checkov, TFSec)
+                "informationUri": "https://www.test-linter-url.com",  # Can be customized
+                "version": "1.0.0"  # Version of the tool (customize as needed)
+            }
+        },
+        "results": []
+    }
+
     for run in sarif_data.get("runs", []):
         for result in run.get("results", []):
             for location in result.get("locations", []):
-                issue = {
-                    "engineId": engine_id,
-                    "ruleId": result.get("ruleId", ""),
-                    "severity": "CRITICAL" if result.get("level", "") == "error" else "MAJOR",
-                    "type": "VULNERABILITY",
-                    "primaryLocation": {
-                        "message": result.get("message", {}).get("text", ""),
-                        "filePath": location.get("physicalLocation", {}).get("artifactLocation", {}).get("uri", ""),
-                        "textRange": {
-                            "startLine": location.get("physicalLocation", {}).get("region", {}).get("startLine", 1),
-                            "endLine": location.get("physicalLocation", {}).get("region", {}).get("endLine", 1)
+                result_data = {
+                    "level": result.get("level", "warning"),  # Error level
+                    "message": {
+                        "text": result.get("message", {}).get("text", "")
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": location.get("physicalLocation", {}).get("artifactLocation", {}).get("uri", "")
+                                },
+                                "region": {
+                                    "startLine": location.get("physicalLocation", {}).get("region", {}).get("startLine", 1),
+                                    "startColumn": location.get("physicalLocation", {}).get("region", {}).get("startColumn", 1),
+                                    "endLine": location.get("physicalLocation", {}).get("region", {}).get("endLine", 1),
+                                    "endColumn": location.get("physicalLocation", {}).get("region", {}).get("endColumn", 1)
+                                }
+                            }
                         }
-                    }
+                    ],
+                    "ruleId": result.get("ruleId", "")
                 }
-                issues.append(issue)
+                runs["results"].append(result_data)
     
-    sonarqube_data = {"issues": issues}
-    
+    sarif_output["runs"].append(runs)
+
     with open(output_file, 'w') as f:
-        json.dump(sonarqube_data, f, indent=2)
+        json.dump(sarif_output, f, indent=2)
 
 # Convert Checkov and TFSec SARIF files to SonarQube format
 convert_sarif_to_sonarqube('results_sarif.sarif', 'checkov-sonarqube.json', 'checkov')

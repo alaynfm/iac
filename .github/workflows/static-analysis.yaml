@@ -163,7 +163,7 @@ jobs:
         run: |
           sonar-scanner \
             -Dsonar.projectKey=techFriday \
-            -Dsonar.sources=checkov-sonarqube.json \  # Check if this file is meant to be analyzed
+            -Dsonar.sources=checkov-sonarqube.json \
             -Dsonar.host.url=http://sonarqube:9000 \
             -Dsonar.login=sqp_37363d6fd7941be7da7e6fa9995ee04058c0c368 \
             -Dsonar.scm.disabled=true
