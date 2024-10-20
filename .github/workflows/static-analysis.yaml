@@ -140,20 +140,13 @@ jobs:
         with:
           name: tflint-sarif
           path: .
-      # Upload the SARIF files to SonarQube via API
-      - name: Upload SARIF files to SonarQube
-        run: |
-          ls -lias
 
       - name: Download Checkov SARIF
         uses: actions/download-artifact@v3
         with:
           name: prisma_policies-sarif
           path: .
-      # Upload the SARIF files to SonarQube via API
-      - name: Upload SARIF files to SonarQube
-        run: |
-          ls -lias
+
 
       - name: Download TFSec SARIF
         uses: actions/download-artifact@v3
@@ -161,13 +154,18 @@ jobs:
           name: tfsec-sarif
           path: .
 
-      # Upload the SARIF files to SonarQube via API
-      - name: Upload SARIF files to SonarQube
+      - name: Convert SARIF to SonarQube format
         run: |
-          ls -lias
+          python3 sarifToSonar.py
+
+      - name: Upload Issues to SonarQube
+        run: |
           curl -u sqp_37363d6fd7941be7da7e6fa9995ee04058c0c368: \
             -F "projectKey=techFriday" \
-            -F "report=@tflint.sarif" \
-            -F "report=@results_sarif.sarif" \
-            -F "report=@tfsec.sarif" \
-            http://sonarqube:9000/api/issue_imports
+            -F "issueFile=@checkov-sonarqube.json" \
+            http://sonarqube:9000/api/issues/import
+
+          curl -u sqp_37363d6fd7941be7da7e6fa9995ee04058c0c368: \
+            -F "projectKey=techFriday" \
+            -F "issueFile=@tfsec-sonarqube.json" \
+            http://sonarqube:9000/api/issues/import

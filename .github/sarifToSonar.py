@@ -30,5 +30,5 @@ def convert_sarif_to_sonarqube(sarif_file, output_file, engine_id):
         json.dump(sonarqube_data, f, indent=2)
 
 # Convert Checkov and TFSec SARIF files to SonarQube format
-convert_sarif_to_sonarqube('checkov-results.sarif', 'checkov-sonarqube.json', 'checkov')
+convert_sarif_to_sonarqube('results_sarif.sarif', 'checkov-sonarqube.json', 'checkov')
 convert_sarif_to_sonarqube('tfsec-results.sarif', 'tfsec-sonarqube.json', 'tfsec')
