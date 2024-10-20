@@ -122,7 +122,7 @@ jobs:
             -Dsonar.projectKey=techFriday \
             -Dsonar.sources=infra \
             -Dsonar.host.url=http://sonarqube:9000 \
-            -Dsonar.token=sqp_525d061da14fca2f43217149238e52c7ed786c83 \
+            -Dsonar.token=sqp_9b685e15ccfe138fbce57806feb3c3139b0fe897 \
             -Dsonar.working.directory=/home/docker/.scannerwork
 
 
@@ -165,7 +165,7 @@ jobs:
           sonar-scanner \
             -Dsonar.projectKey=techFriday \
             -Dsonar.host.url=http://sonarqube:9000 \
-            -Dsonar.login=sqp_525d061da14fca2f43217149238e52c7ed786c83 \
+            -Dsonar.login=sqp_9b685e15ccfe138fbce57806feb3c3139b0fe897 \
             -Dsonar.scm.disabled=true \
             -Dsonar.externalIssuesReportPaths=checkov-sonarqube.json
 
