@@ -11,11 +11,15 @@ def convert_to_sonar_format(sarif_file, output_file, engine_id):
     for run in sarif_data.get("runs", []):
         for result in run.get("results", []):
             for location in result.get("locations", []):
+                severity = result.get("level", "WARNING").upper()
+                if severity not in ["INFO", "MINOR", "MAJOR", "CRITICAL", "BLOCKER"]:
+                    severity = "MAJOR"  # Default to MAJOR if an invalid severity is found
+
                 issue_data = {
-                    "engineId": engine_id,  # Engine name (e.g., Checkov, TFSec)
+                    "engineId": engine_id,
                     "ruleId": result.get("ruleId", ""),
-                    "severity": result.get("level", "MAJOR").upper(),  # Convert SARIF levels to SonarQube severity
-                    "type": "VULNERABILITY",  # Can be customized as needed
+                    "severity": severity,
+                    "type": "VULNERABILITY",  # Customize based on the type of issue
                     "primaryLocation": {
                         "message": result.get("message", {}).get("text", ""),
                         "filePath": location.get("physicalLocation", {}).get("artifactLocation", {}).get("uri", ""),
