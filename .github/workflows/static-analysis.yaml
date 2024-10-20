@@ -164,9 +164,4 @@ jobs:
           curl -u sqp_37363d6fd7941be7da7e6fa9995ee04058c0c368: \
             -F "projectKey=techFriday" \
             -F "issueFile=@checkov-sonarqube.json" \
-            http://sonarqube:9000/api/issues/import
-
-          curl -u sqp_37363d6fd7941be7da7e6fa9995ee04058c0c368: \
-            -F "projectKey=techFriday" \
-            -F "issueFile=@tfsec-sonarqube.json" \
-            http://sonarqube:9000/api/issues/import
+            http://sonarqube:9000/api/issue_imports
