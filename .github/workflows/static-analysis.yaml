@@ -93,7 +93,7 @@ jobs:
       - name: Run SonarQube Analysis
         run: |
           sonar-scanner \
-            -Dsonar.projectKey=your_project_key \
+            -Dsonar.projectKey=techFriday \
             -Dsonar.sources=. \
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.login=sqp_37363d6fd7941be7da7e6fa9995ee04058c0c368
@@ -123,6 +123,5 @@ jobs:
 
       
   
-
 
 
