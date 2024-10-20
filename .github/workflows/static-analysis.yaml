@@ -156,6 +156,7 @@ jobs:
 
       - name: Convert SARIF to SonarQube format
         run: |
+          ls -lias
           python3 sarifToSonar.py
 
       - name: Upload Issues to SonarQube
