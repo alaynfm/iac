@@ -42,6 +42,12 @@ jobs:
           sarif_file: tflint.sarif
           category: tflint
 
+      - name: Upload TFLint SARIF as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: tflint-sarif
+          path: tflint.sarif
+
   checkov:
     name: 'Checkov Policies'
     runs-on: ubuntu-latest
@@ -69,6 +75,12 @@ jobs:
             prisma_policies.sarif
           category: checkov-analysis-1
 
+      - name: Upload Checkov SARIF as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: checkov-sarif
+          path: prisma_policies.sarif
+
       - name: Run Checkov CUSTOM Policies
         id: checkov_custom
         uses: bridgecrewio/checkov-action@master
@@ -80,6 +92,12 @@ jobs:
           output_format: sarif
           output_file_path: custom_policies.sarif
         continue-on-error: true
+
+      - name: Upload Checkov Custom SARIF as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: checkov-custom-sarif
+          path: custom_policies.sarif
 
   tfsec:
     name: tfsec sarif report
@@ -100,7 +118,13 @@ jobs:
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: tfsec.sarif
-          category: tfsec 
+          category: tfsec
+
+      - name: Upload TFSec SARIF as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: tfsec-sarif
+          path: tfsec.sarif
 
   manual_approval:
     name: Manual Approval for SonarQube Upload
