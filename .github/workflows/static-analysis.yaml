@@ -94,9 +94,13 @@ jobs:
         run: |
           sonar-scanner \
             -Dsonar.projectKey=techFriday \
-            -Dsonar.sources=. \
-            -Dsonar.host.url=sonarqube:9000 \
-            -Dsonar.login=sqp_37363d6fd7941be7da7e6fa9995ee04058c0c368
+            -Dsonar.sources=infra \
+            -Dsonar.host.url=http://sonarqube:9000 \
+            -Dsonar.login=sqp_37363d6fd7941be7da7e6fa9995ee04058c0c368 \
+            -Dsonar.working.directory=/home/docker/.scannerwork
+
+
+
 
   tfsec:
     name: tfsec sarif report
