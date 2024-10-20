@@ -161,7 +161,8 @@ jobs:
 
       - name: Upload Issues to SonarQube
         run: |
-          curl -u sqp_37363d6fd7941be7da7e6fa9995ee04058c0c368: \
-            -F "projectKey=techFriday" \
-            -F "issueFile=@checkov-sonarqube.json" \
-            http://sonarqube:9000/api/issue_imports
+          sonar-scanner \
+            -Dsonar.projectKey=techFriday \
+            -Dsonar.sources=checkov-sonarqube.json \
+            -Dsonar.host.url=http://localhost:9000 \
+            -Dsonar.login=sqp_37363d6fd7941be7da7e6fa9995ee04058c0c368
