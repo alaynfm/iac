@@ -140,12 +140,20 @@ jobs:
         with:
           name: tflint-sarif
           path: .
+      # Upload the SARIF files to SonarQube via API
+      - name: Upload SARIF files to SonarQube
+        run: |
+          ls -lias
 
       - name: Download Checkov SARIF
         uses: actions/download-artifact@v3
         with:
           name: prisma_policies-sarif
           path: .
+      # Upload the SARIF files to SonarQube via API
+      - name: Upload SARIF files to SonarQube
+        run: |
+          ls -lias
 
       - name: Download TFSec SARIF
         uses: actions/download-artifact@v3
