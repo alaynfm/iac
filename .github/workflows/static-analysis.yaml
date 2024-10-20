@@ -168,6 +168,6 @@ jobs:
           curl -u sqp_37363d6fd7941be7da7e6fa9995ee04058c0c368: \
             -F "projectKey=techFriday" \
             -F "report=@tflint.sarif" \
-            -F "report=@prisma_policies.sarif" \
+            -F "report=@results_sarif.sarif" \
             -F "report=@tfsec.sarif" \
             http://sonarqube:9000/api/issue_imports
