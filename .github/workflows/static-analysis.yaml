@@ -114,6 +114,7 @@ jobs:
           else
             echo "No .tf files changed"
             exit 0  # Exit if no .tf files were changed.
+          fi
 
       - name: Run Checkov on Changed Files
         run: |
@@ -157,6 +158,7 @@ jobs:
           else
             echo "No .tf files changed"
             exit 0  # Exit if no .tf files were changed.
+          fi
 
       - name: Run TFSec on Changed Files
         run: |
