@@ -4,11 +4,39 @@ on:
   push:
     branches-ignore:
       - dev
+
 permissions:
   contents: write
   security-events: write  # Ensure the action can upload SARIF results
 
 jobs:
+  # Secret scanning job
+  secret-scan:
+    name: "Secret Scan"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install git-secrets
+        run: |
+          git clone https://github.com/awslabs/git-secrets.git
+          cd git-secrets && sudo make install
+
+      - name: Scan for Secrets
+        run: git secrets --scan --recursive
+
+      - name: Run TruffleHog to detect sensitive information
+        run: |
+          pip install truffleHog
+          trufflehog --regex --entropy=True .
+
+      - name: Upload Results as an Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: secret-scan-results
+          path: secret-scan-results.txt
+
   tflint:
     runs-on: ubuntu-latest
     permissions: write-all
@@ -17,22 +45,29 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Cache TFLint plugin directory
-        uses: actions/cache@v4
-        with:
-          path: ~/.tflint.d/plugins
-          key: ubuntu-latest-tflint-${{ hashFiles('.tflint.hcl') }}
-      - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@v4
-        with:
-          tflint_version: v0.52.0
+      - name: Get Changed Terraform Files
+        id: changes
+        run: |
+          git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt || echo "No .tf files changed"
+
+      - name: Check if any Terraform files were changed
+        id: check_files
+        run: |
+          if [ -s changed_files.txt ]; then
+            echo "Files changed"
+          else
+            echo "No .tf files changed"
+            exit 0
+          fi
 
       - name: Initialize TFLint
         run: tflint --init
 
-      - name: Run TFLint and generate SARIF report
+      - name: Run TFLint on Changed Files
         run: |
-          tflint -f sarif --chdir=infra/ --recursive > tflint.sarif
+          while IFS= read -r file; do
+            tflint -f sarif --chdir=infra/ --recursive --config=${file} >> tflint.sarif
+          done < changed_files.txt
         continue-on-error: true
 
       - name: Upload SARIF file
@@ -56,23 +91,32 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Run Checkov PRISMA Policies
-        id: checkov
-        uses: bridgecrewio/checkov-action@master
-        with:
-          directory: infra/
-          framework: terraform
-          config_file: aws/CKV_LIST.yaml
-          output_format: sarif
-          output_file_path: prisma_policies.sarif
-        continue-on-error: true
+      - name: Get Changed Terraform Files
+        id: changes
+        run: |
+          git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt || echo "No .tf files changed"
 
+      - name: Check if any Terraform files were changed
+        id: check_files
+        run: |
+          if [ -s changed_files.txt ]; then
+            echo "Files changed"
+          else
+            echo "No .tf files changed"
+            exit 0
+          fi
+
+      - name: Run Checkov on Changed Files
+        run: |
+          while IFS= read -r file; do
+            checkov -d infra/ -o sarif --config-file aws/CKV_LIST.yaml >> prisma_policies.sarif
+          done < changed_files.txt
+        continue-on-error: true
 
       - name: Upload Checkov SARIF Reports
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: |
-            prisma_policies.sarif
+          sarif_file: prisma_policies.sarif
           category: checkov-analysis-1
 
       - name: Upload Checkov SARIF as an artifact
@@ -87,18 +131,33 @@ jobs:
     needs: tflint
 
     steps:
-      - name: Clone repo
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: run report
-        uses: aquasecurity/tfsec-sarif-action@v0.1.0
-        with:
-          sarif_file: tfsec.sarif          
+      - name: Get Changed Terraform Files
+        id: changes
+        run: |
+          git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt || echo "No .tf files changed"
+
+      - name: Check if any Terraform files were changed
+        id: check_files
+        run: |
+          if [ -s changed_files.txt ]; then
+            echo "Files changed"
+          else
+            echo "No .tf files changed"
+            exit 0
+          fi
+
+      - name: Run TFSec on Changed Files
+        run: |
+          while IFS= read -r file; do
+            tfsec --format sarif --config-file $file >> tfsec.sarif
+          done < changed_files.txt
 
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
         with:
-          # Path to SARIF file relative to the root of the repository
           sarif_file: tfsec.sarif
           category: tfsec
 
@@ -137,7 +196,7 @@ jobs:
     env:
       SONAR_PROJECT_KEY: techFriday
       SONAR_HOST_URL: http://sonarqube:9000
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
       
     steps:
       - name: Checkout Code
@@ -156,7 +215,6 @@ jobs:
           name: prisma_policies-sarif
           path: .
 
-
       - name: Download TFSec SARIF
         uses: actions/download-artifact@v3
         with:
@@ -165,7 +223,6 @@ jobs:
 
       - name: Convert SARIF to SonarQube format
         run: |
-          ls -lias
           python3 sarifToSonar.py
 
       - name: Upload Issues to SonarQube
@@ -174,12 +231,9 @@ jobs:
           SONAR_HOST_URL: http://sonarqube:9000
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}  # Use secrets for tokens
         run: |
-          ls -lias
           sonar-scanner \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.scm.disabled=true \
-            -Dsonar.externalIssuesReportPaths=all.json
-
-
+            -Dsonar.externalIssuesReportPaths=checkov-sonarqube.json
