@@ -57,14 +57,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Install yq
+      - name: Combine YAML files
         run: |
-          sudo apt-get update
-          sudo apt-get install -y yq
-
-      - name: Combine YAML files #combine the files
-        run: |
-          yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' aws/CKV_LIST_1.yaml aws/CKV_LIST_2.yaml > aws/CKV_CUSTOM_LIST.yaml
+          cat aws/CKV_CUSTOM_LIST.yaml aws/CKV_LIST.yaml > aws/CKV_LIST2.yaml
 
       - name: Run Checkov PRISMA Policies
         id: checkov
@@ -72,7 +67,7 @@ jobs:
         with:
           directory: infra/
           framework: terraform
-          config_file: aws/CKV_CUSTOM_LIST.yaml
+          config_file: aws/CKV_LIST2.yaml
           output_format: sarif
           output_file_path: prisma_policies.sarif
         continue-on-error: true
