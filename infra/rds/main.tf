@@ -20,6 +20,7 @@ resource "aws_security_group" "rds_sg" {
     protocol    = "tcp"
     cidr_blocks = concat(var.private_subnets, var.private_deploy_subnets)
   }
+  
 
 
   egress {

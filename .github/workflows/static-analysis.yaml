@@ -16,7 +16,7 @@ jobs:
 
   check-tf-location:
     runs-on: ubuntu-latest
-    name: Check Terraform files location
+    name: CHECK WORKDIR
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4  # Checkout the repository code.
@@ -31,7 +31,7 @@ jobs:
           fi
 
   secret-scan:
-    name: "Secret Scan"
+    name: "SECRET SCAN"
     runs-on: ubuntu-latest
     needs: [check-tf-location, detect-changes]
     steps:
@@ -61,6 +61,7 @@ jobs:
 
   # TFLint job: Runs TFLint to check Terraform files.
   tflint:
+    name: "TFLINT"
     runs-on: ubuntu-latest
     permissions: write-all
     needs: secret-scan
@@ -187,11 +188,7 @@ jobs:
     name: "GATHER ALL"
     runs-on: self-hosted
     needs: [tflint, checkov, tfsec, sonarqube]
-    env:
-      SONAR_PROJECT_KEY: techFriday
-      SONAR_HOST_URL: http://sonarqube:9000
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
