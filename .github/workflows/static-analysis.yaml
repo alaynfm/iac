@@ -48,7 +48,7 @@ jobs:
           path: tflint.sarif
 
   checkov:
-    name: 'Checkov Policies'
+    name: 'CHECKOV'
     runs-on: ubuntu-latest
     needs: tflint
 
@@ -116,6 +116,10 @@ jobs:
     name: "SONAR"
     runs-on: self-hosted
     needs: tflint
+    env:
+      SONAR_PROJECT_KEY: techFriday
+      SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST_URL }}
+      SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -125,15 +129,20 @@ jobs:
           sonar-scanner \∫
             -Dsonar.projectKey=techFriday \
             -Dsonar.sources=infra \
-            -Dsonar.host.url=${{ secrets.SONARQUBE_HOST_URL }} \
-            -Dsonar.token=${{ secrets.SONARQUBE_TOKEN }} \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.working.directory=/home/docker/.scannerwork
 
 
   sonarqubeRepo:
-    name: "UPLOAD RESULT TO SONAR"
+    name: "GATHER ALL"
     runs-on: self-hosted
     needs: [tflint, checkov, tfsec, sonarqube]
+    env:
+      SONAR_PROJECT_KEY: techFriday
+      SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST_URL }}
+      SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+      
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -167,9 +176,9 @@ jobs:
         run: |
           ls -lias
           sonar-scanner \
-            -Dsonar.projectKey=techFriday \
-            -Dsonar.host.url=${{ secrets.SONARQUBE_HOST_URL }} \
-            -Dsonar.token=${{ secrets.SONARQUBE_TOKEN }} \
+            -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.scm.disabled=true \
             -Dsonar.externalIssuesReportPaths=checkov-sonarqube.json
 
