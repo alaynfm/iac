@@ -123,11 +123,11 @@ jobs:
 
       - name: Run SonarQube Analysis
         run: |
-          sonar-scanner \
+          sonar-scanner \∫
             -Dsonar.projectKey=techFriday \
             -Dsonar.sources=infra \
-            -Dsonar.host.url=http://sonarqube:9000 \
-            -Dsonar.token=sqp_27d062bc99125655655c91fb3c7725258bd33586 \
+            -Dsonar.host.url=${{ secrets.SONARQUBE_HOST_URL }} \
+            -Dsonar.token=${{ secrets.SONARQUBE_TOKEN }} \
             -Dsonar.working.directory=/home/docker/.scannerwork
 
 
@@ -169,8 +169,8 @@ jobs:
           ls -lias
           sonar-scanner \
             -Dsonar.projectKey=techFriday \
-            -Dsonar.host.url=http://sonarqube:9000 \
-            -Dsonar.login=sqp_27d062bc99125655655c91fb3c7725258bd33586 \
+            -Dsonar.host.url=${{ secrets.SONARQUBE_HOST_URL }} \
+            -Dsonar.token=${{ secrets.SONARQUBE_TOKEN }} \
             -Dsonar.scm.disabled=true \
             -Dsonar.externalIssuesReportPaths=checkov-sonarqube.json
 
