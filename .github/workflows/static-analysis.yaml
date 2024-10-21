@@ -65,23 +65,30 @@ jobs:
     needs: secret-scan
 
     steps:
+    
       - name: Checkout source code
-        uses: actions/checkout@v4  # Checkout the repository code.
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Ensure we have at least two commits for diff
+
+      - name: Get Changed Terraform Files
+        id: changes
+        run: |
+          if git rev-parse ${{ github.sha }}^1 >/dev/null 2>&1; then
+            git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt
+          else
+            echo "No previous commit found. This might be the first commit." > changed_files.txt
+          fi
+
+          if [ ! -s changed_files.txt ]; then
+            echo "No .tf files changed" > changed_files.txt
+          fi
 
       - name: Get Changed Terraform Files
         id: changes
         run: |
           git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt || echo "No .tf files changed"  # Identify changed .tf files.
 
-      - name: Check if any Terraform files were changed
-        id: check_files
-        run: |
-          if [ -s changed_files.txt ]; then
-            echo "Files changed"
-          else
-            echo "No .tf files changed"
-            exit 0  # Exit if no .tf files were changed.
-          fi
 
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v4
@@ -118,13 +125,23 @@ jobs:
     needs: [tflint, secret-scan]
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Ensure we have at least two commits for diff
 
       - name: Get Changed Terraform Files
         id: changes
         run: |
-          git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt || echo "No .tf files changed"  # Identify changed .tf files.
+          if git rev-parse ${{ github.sha }}^1 >/dev/null 2>&1; then
+            git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt
+          else
+            echo "No previous commit found. This might be the first commit." > changed_files.txt
+          fi
+
+          if [ ! -s changed_files.txt ]; then
+            echo "No .tf files changed" > changed_files.txt
+          fi
 
       - name: Check if any Terraform files were changed
         id: check_files
@@ -162,14 +179,23 @@ jobs:
     needs: [tflint, secret-scan]
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Ensure we have at least two commits for diff
 
       - name: Get Changed Terraform Files
         id: changes
         run: |
-          git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt || echo "No .tf files changed"  # Identify changed .tf files.
+          if git rev-parse ${{ github.sha }}^1 >/dev/null 2>&1; then
+            git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt
+          else
+            echo "No previous commit found. This might be the first commit." > changed_files.txt
+          fi
 
+          if [ ! -s changed_files.txt ]; then
+            echo "No .tf files changed" > changed_files.txt
+          fi
       - name: Check if any Terraform files were changed
         id: check_files
         run: |
