@@ -21,6 +21,7 @@ resource "aws_security_group" "rds_sg" {
     cidr_blocks = concat(var.private_subnets, var.private_deploy_subnets)
   }
 
+
   egress {
     from_port   = 0
     to_port     = 0
