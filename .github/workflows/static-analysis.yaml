@@ -129,7 +129,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
-            fetch-depth: 2  # Ensure we have at least two commits for diff
+            fetch-depth: 0  # Ensure we have at least two commits for diff
 
 
       - name: Get Changed Terraform Files
@@ -193,7 +193,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2  # Ensure we have at least two commits for diff
+          fetch-depth: 0  # Ensure we have at least two commits for diff
 
 
       - name: Get Changed Terraform Files
