@@ -1,16 +1,6 @@
 import json
 import re
 
-def classify_issue_by_pattern(rule_id, message, file_path):
-    # Pattern-based classification for Security (VULNERABILITY)
-    if re.search(r"(encryption|KMS|IAM|public|secret|security group|access|rotation|restrict|VPC)", message, re.IGNORECASE):
-        return "VULNERABILITY"
-    # Pattern-based classification for Reliability (BUG)
-    elif re.search(r"(monitoring|logging|Multi-AZ|availability|upgrade|snapshot|backup|failover)", message, re.IGNORECASE):
-        return "BUG"
-    # Default classification as Maintainability (CODE_SMELL)
-    else:
-        return "CODE_SMELL"
 
 def convert_to_sonar_format(sarif_file, output_file, engine_id):
     with open(sarif_file, 'r') as f:
@@ -27,7 +17,7 @@ def convert_to_sonar_format(sarif_file, output_file, engine_id):
             file_path = result.get("locations", [])[0].get("physicalLocation", {}).get("artifactLocation", {}).get("uri", "")
 
             # Classify based on patterns
-            issue_type = classify_issue_by_pattern(rule_id, message, file_path)
+            issue_type = "CODE_SMELL"
 
             for location in result.get("locations", []):
                 severity = result.get("level", "WARNING").upper()
@@ -38,7 +28,7 @@ def convert_to_sonar_format(sarif_file, output_file, engine_id):
                     "engineId": engine_id,
                     "ruleId": rule_id,
                     "severity": severity,
-                    "type": issue_type,  # Set issue type to VULNERABILITY, BUG, or CODE_SMELL
+                    "type": issue_type,  # Set issue type to VULNERABILITY, BUG, or CODE_SMELL. It is going to be deprecated
                     "primaryLocation": {
                         "message": message,
                         "filePath": location.get("physicalLocation", {}).get("artifactLocation", {}).get("uri", ""),

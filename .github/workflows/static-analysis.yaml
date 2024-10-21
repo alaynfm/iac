@@ -57,7 +57,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-
       - name: Run Checkov PRISMA Policies
         id: checkov
         uses: bridgecrewio/checkov-action@master
@@ -68,6 +67,12 @@ jobs:
           output_format: sarif
           output_file_path: prisma_policies.sarif
         continue-on-error: true
+        env:
+          CKV_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CKV_OPENAI_MAX_FINDINGS: 5
+          CKV_OPENAI_MAX_TOKENS: 512
+          CKV_OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+
 
       - name: Upload Checkov SARIF Reports
         uses: github/codeql-action/upload-sarif@v3
@@ -83,7 +88,7 @@ jobs:
           path: prisma_policies.sarif
 
   tfsec:
-    name: tfsec sarif report
+    name: TFSEC
     runs-on: ubuntu-latest
     needs: tflint
 
@@ -110,7 +115,7 @@ jobs:
           path: tfsec.sarif
 
   sonarqube:
-    name: "SonarQube Analysis"
+    name: "SONAR"
     runs-on: self-hosted
     needs: tflint
     steps:
@@ -128,7 +133,7 @@ jobs:
 
 
   sonarqubeRepo:
-    name: "Upload sonarqube Analaysis"
+    name: "UPLOAD RESULT TO SONAR"
     runs-on: self-hosted
     needs: [tflint, checkov, tfsec, sonarqube]
     steps:
