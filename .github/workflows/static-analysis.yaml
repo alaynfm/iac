@@ -115,19 +115,18 @@ jobs:
     env:
       SONAR_PROJECT_KEY: techFriday
       SONAR_HOST_URL: http://sonarqube:9000
-      SONAR_TOKEN: sqp_3d95625f169452b1201b1d7353c9b28e1276a67d
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  # Use secrets for tokens
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: Run SonarQube Analysis
         run: |
-          sonar-scanner \∫
+          sonar-scanner \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.token=$SONAR_TOKEN \
-            -Dsonar.token=$SONAR_TOKEN \
-            -Dsonar.working.directory=/home/docker/.scannerwork
+            -Dsonar.working.directory="/home/docker/.scannerwork"
 
 
   sonarqubeRepo:
