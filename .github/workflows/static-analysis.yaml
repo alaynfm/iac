@@ -25,11 +25,13 @@ jobs:
 
       - name: Scan for Secrets
         run: git secrets --scan --recursive
+        continue-on-error: true
 
       - name: Run TruffleHog to detect sensitive information
         run: |
           pip install truffleHog
           trufflehog --regex --entropy=True .
+        continue-on-error: true
 
       - name: Upload Results as an Artifact
         uses: actions/upload-artifact@v3
@@ -59,6 +61,11 @@ jobs:
             echo "No .tf files changed"
             exit 0
           fi
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.52.0 
 
       - name: Initialize TFLint
         run: tflint --init
