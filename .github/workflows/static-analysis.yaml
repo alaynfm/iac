@@ -33,7 +33,7 @@ jobs:
   secret-scan:
     name: "SECRET SCAN"
     runs-on: ubuntu-latest
-    needs: [check-tf-location, detect-changes]
+    needs: check-tf-location
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
