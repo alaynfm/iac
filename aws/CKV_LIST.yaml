@@ -44,3 +44,6 @@ check:
   - CKV_AWS_230
   - CKV_AWS_231
   - CKV_AWS_232
+  - CKV_CUSTOM_1
+  - CKV_CUSTOM_3
+  - CKV_GREEN_1
