@@ -43,6 +43,7 @@ jobs:
   tflint:
     runs-on: ubuntu-latest
     permissions: write-all
+    needs: secret-scan
 
     steps:
       - name: Checkout source code
