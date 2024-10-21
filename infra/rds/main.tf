@@ -126,3 +126,4 @@ resource "aws_db_instance" "postgres" {
     aws_security_group.rds_sg
   ]
 }
+

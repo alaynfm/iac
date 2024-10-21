@@ -105,4 +105,4 @@ def analyze_all_sarif_files_in_current_directory(output_file):
         json.dump(all_issues, f, indent=2)
 
 # Convert all SARIF files in the current directory to SonarQube-compatible format and combine into one output file
-analyze_all_sarif_files_in_current_directory('checkov-sonarqube.json')
+analyze_all_sarif_files_in_current_directory('all.json')
