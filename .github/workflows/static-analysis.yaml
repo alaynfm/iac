@@ -7,10 +7,10 @@ on:
 
 permissions:
   contents: write
-  security-events: write  # Ensure the action can upload SARIF results
+  security-events: write  # Ensure the action can upload SARIF results.
 
 jobs:
-  # Secret scanning job
+  # Secret scanning job: Scans the repository for any secrets.
   secret-scan:
     name: "Secret Scan"
     runs-on: ubuntu-latest
@@ -21,36 +21,35 @@ jobs:
       - name: Install git-secrets
         run: |
           git clone https://github.com/awslabs/git-secrets.git
-          cd git-secrets && sudo make install
+          cd git-secrets && sudo make install  # Install git-secrets.
 
       - name: Scan for Secrets
-        run: git secrets --scan --recursive
-        continue-on-error: true
+        run: git secrets --scan --recursive  # Scan the repository for secrets.
 
       - name: Run TruffleHog to detect sensitive information
         run: |
-          pip install truffleHog
-          trufflehog --regex --entropy=True .
-        continue-on-error: true
+          pip install truffleHog  # Install TruffleHog.
+          trufflehog --regex --entropy=True .  # Run TruffleHog.
 
       - name: Upload Results as an Artifact
         uses: actions/upload-artifact@v3
         with:
           name: secret-scan-results
-          path: secret-scan-results.txt
+          path: secret-scan-results.txt  # Upload the results of the scan.
 
+  # TFLint job: Runs TFLint to check Terraform files.
   tflint:
     runs-on: ubuntu-latest
     permissions: write-all
 
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4  # Checkout the repository code.
 
       - name: Get Changed Terraform Files
         id: changes
         run: |
-          git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt || echo "No .tf files changed"
+          git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt || echo "No .tf files changed"  # Identify changed .tf files.
 
       - name: Check if any Terraform files were changed
         id: check_files
@@ -59,36 +58,36 @@ jobs:
             echo "Files changed"
           else
             echo "No .tf files changed"
-            exit 0
-          fi
+            exit 0  # Exit if no .tf files were changed.
 
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v4
         with:
-          tflint_version: v0.52.0 
+          tflint_version: v0.52.0  # Install TFLint.
 
       - name: Initialize TFLint
-        run: tflint --init
+        run: tflint --init  # Initialize TFLint.
 
       - name: Run TFLint on Changed Files
         run: |
           while IFS= read -r file; do
-            tflint -f sarif --chdir=infra/ --recursive --config=${file} >> tflint.sarif
+            tflint -f sarif --chdir=infra/ --recursive --config=${file} >> tflint.sarif  # Run TFLint on changed files.
           done < changed_files.txt
-        continue-on-error: true
 
       - name: Upload SARIF file
+        if: steps.check_files.outputs.changed_files != '' && steps.check_files.conclusion != 'failure'
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: tflint.sarif
-          category: tflint
+          sarif_file: tflint.sarif  # Upload the SARIF file.
 
       - name: Upload TFLint SARIF as an artifact
+        if: steps.check_files.outputs.changed_files != '' && steps.check_files.conclusion != 'failure'
         uses: actions/upload-artifact@v3
         with:
           name: tflint-sarif
-          path: tflint.sarif
+          path: tflint.sarif  # Upload SARIF as an artifact.
 
+  # Checkov job: Runs Checkov to check Terraform files for misconfigurations.
   checkov:
     name: 'CHECKOV'
     runs-on: ubuntu-latest
@@ -101,7 +100,7 @@ jobs:
       - name: Get Changed Terraform Files
         id: changes
         run: |
-          git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt || echo "No .tf files changed"
+          git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt || echo "No .tf files changed"  # Identify changed .tf files.
 
       - name: Check if any Terraform files were changed
         id: check_files
@@ -110,28 +109,28 @@ jobs:
             echo "Files changed"
           else
             echo "No .tf files changed"
-            exit 0
-          fi
+            exit 0  # Exit if no .tf files were changed.
 
       - name: Run Checkov on Changed Files
         run: |
           while IFS= read -r file; do
-            checkov -d infra/ -o sarif --config-file aws/CKV_LIST.yaml >> prisma_policies.sarif
+            checkov -d infra/ -o sarif --config-file aws/CKV_LIST.yaml >> prisma_policies.sarif  # Run Checkov on changed files.
           done < changed_files.txt
-        continue-on-error: true
 
       - name: Upload Checkov SARIF Reports
+        if: steps.check_files.outputs.changed_files != '' && steps.check_files.conclusion != 'failure'
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: prisma_policies.sarif
-          category: checkov-analysis-1
 
       - name: Upload Checkov SARIF as an artifact
+        if: steps.check_files.outputs.changed_files != '' && steps.check_files.conclusion != 'failure'
         uses: actions/upload-artifact@v3
         with:
           name: prisma_policies-sarif
           path: prisma_policies.sarif
 
+  # TFSec job: Runs TFSec to analyze Terraform files for security issues.
   tfsec:
     name: TFSEC
     runs-on: ubuntu-latest
@@ -144,7 +143,7 @@ jobs:
       - name: Get Changed Terraform Files
         id: changes
         run: |
-          git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt || echo "No .tf files changed"
+          git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt || echo "No .tf files changed"  # Identify changed .tf files.
 
       - name: Check if any Terraform files were changed
         id: check_files
@@ -153,32 +152,33 @@ jobs:
             echo "Files changed"
           else
             echo "No .tf files changed"
-            exit 0
-          fi
+            exit 0  # Exit if no .tf files were changed.
 
       - name: Run TFSec on Changed Files
         run: |
           while IFS= read -r file; do
-            tfsec --format sarif --config-file $file >> tfsec.sarif
+            tfsec --format sarif --config-file $file >> tfsec.sarif  # Run TFSec on changed files.
           done < changed_files.txt
 
       - name: Upload SARIF file
+        if: steps.check_files.outputs.changed_files != '' && steps.check_files.conclusion != 'failure'
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: tfsec.sarif
-          category: tfsec
 
       - name: Upload TFSec SARIF as an artifact
+        if: steps.check_files.outputs.changed_files != '' && steps.check_files.conclusion != 'failure'
         uses: actions/upload-artifact@v3
         with:
           name: tfsec-sarif
           path: tfsec.sarif
 
+  # SonarQube job: Runs SonarQube analysis on the entire codebase, not based on diffs.
   sonarqube:
     name: "SONAR"
     runs-on: self-hosted
     needs: tflint
-    
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -187,15 +187,14 @@ jobs:
         env:
           SONAR_PROJECT_KEY: techFriday
           SONAR_HOST_URL: http://sonarqube:9000
-          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}  # Use secrets for tokens
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
         run: |
           sonar-scanner \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.token=$SONAR_TOKEN \
-            -Dsonar.working.directory="/home/docker/.scannerwork"
-
-
+            -Dsonar.working.directory="/home/docker/.scannerwork"  # Run SonarQube on the entire codebase.
+  
   sonarqubeRepo:
     name: "GATHER ALL"
     runs-on: self-hosted
@@ -204,43 +203,55 @@ jobs:
       SONAR_PROJECT_KEY: techFriday
       SONAR_HOST_URL: http://sonarqube:9000
       SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
-      
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Download artifacts from other jobs
+      # Download SARIF files from the TFLint job if they exist.
       - name: Download TFLint SARIF
+        if: steps.tflint.outputs.changed_files != ''  # Only download if SARIF exists.
         uses: actions/download-artifact@v3
         with:
           name: tflint-sarif
-          path: .
+          path: ./  # Download to the current working directory.
 
+      # Download SARIF files from the Checkov job if they exist.
       - name: Download Checkov SARIF
+        if: steps.checkov.outputs.changed_files != ''  # Only download if SARIF exists.
         uses: actions/download-artifact@v3
         with:
           name: prisma_policies-sarif
-          path: .
+          path: ./  # Download to the current working directory.
 
+      # Download SARIF files from the TFSec job if they exist.
       - name: Download TFSec SARIF
+        if: steps.tfsec.outputs.changed_files != ''  # Only download if SARIF exists.
         uses: actions/download-artifact@v3
         with:
           name: tfsec-sarif
-          path: .
+          path: ./  # Download to the current working directory.
 
+      # Convert the SARIF files to SonarQube-compatible format if any SARIF files exist.
       - name: Convert SARIF to SonarQube format
         run: |
-          python3 sarifToSonar.py
+          if ls *.sarif 1> /dev/null 2>&1; then
+            python3 sarifToSonar.py  # Only convert if SARIF files exist.
+          else
+            echo "No SARIF files to process."
+            exit 0  # Exit successfully if no SARIF files exist.
 
+      # Upload the converted issues to SonarQube if SARIF conversion was successful.
       - name: Upload Issues to SonarQube
+        if: success() && steps.Convert_SARIF_to_SonarQube_format.conclusion == 'success'  # Ensure the conversion step succeeded.
         env:
           SONAR_PROJECT_KEY: techFriday
           SONAR_HOST_URL: http://sonarqube:9000
-          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}  # Use secrets for tokens
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}  # Use secrets for tokens.
         run: |
           sonar-scanner \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.scm.disabled=true \
-            -Dsonar.externalIssuesReportPaths=checkov-sonarqube.json
+            -Dsonar.externalIssuesReportPaths=checkov-sonarqube.json  # Upload the external issues to SonarQube.
