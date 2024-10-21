@@ -60,6 +60,7 @@ jobs:
       - name: Combine YAML files
         run: |
           cat aws/CKV_CUSTOM_LIST.yaml aws/CKV_LIST.yaml > aws/CKV_LIST2.yaml
+          cat aws/CKV_LIST2.yaml
 
       - name: Run Checkov PRISMA Policies
         id: checkov
