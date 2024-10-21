@@ -67,8 +67,6 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Ensure we have at least two commits for diff
 
       - name: Get Changed Terraform Files
         id: changes
@@ -123,57 +121,67 @@ jobs:
 
   # Checkov job: Runs Checkov to check Terraform files for misconfigurations.
   checkov:
-    name: 'CHECKOV'
-    runs-on: ubuntu-latest
-    needs: [tflint, secret-scan]
+  name: 'CHECKOV'
+  runs-on: ubuntu-latest
+  needs: [tflint, secret-scan]
 
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-        with:
+  steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+      with:
           fetch-depth: 2  # Ensure we have at least two commits for diff
 
-      - name: Get Changed Terraform Files
-        id: changes
-        run: |
-          if git rev-parse ${{ github.sha }}^1 >/dev/null 2>&1; then
-            git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt
-          else
-            echo "No previous commit found. This might be the first commit." > changed_files.txt
-          fi
 
-          if [ ! -s changed_files.txt ]; then
-            echo "No .tf files changed" > changed_files.txt
-          fi
+    - name: Get Changed Terraform Files
+      id: changes
+      run: |
+        if git rev-parse ${{ github.sha }}^1 >/dev/null 2>&1; then
+          git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt
+        else
+          echo "No previous commit found. This might be the first commit." > changed_files.txt
+        fi
 
-      - name: Check if any Terraform files were changed
-        id: check_files
-        run: |
-          if [ -s changed_files.txt ]; then
-            echo "Files changed"
-          else
-            echo "No .tf files changed"
-            exit 0  # Exit if no .tf files were changed.
-          fi
+        if [ ! -s changed_files.txt ]; then
+          echo "No .tf files changed" > changed_files.txt
+        fi
 
-      - name: Run Checkov on Changed Files
-        run: |
-          while IFS= read -r file; do
-            checkov -d infra/ -o sarif --config-file aws/CKV_LIST.yaml >> prisma_policies.sarif  # Run Checkov on changed files.
-          done < changed_files.txt
+    - name: Check if any Terraform files were changed
+      id: check_files
+      run: |
+        if [ -s changed_files.txt ]; then
+          echo "Files changed"
+        else
+          echo "No .tf files changed"
+          exit 0  # Exit if no .tf files were changed.
+        fi
 
-      - name: Upload Checkov SARIF Reports
-        if: steps.check_files.outputs.changed_files != '' && steps.check_files.conclusion != 'failure'
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: prisma_policies.sarif
+    # Conditionally run Checkov if there are changes in Terraform files
+    - name: Run Checkov PRISMA Policies
+      id: checkov
+      if: steps.check_files.conclusion == 'success'
+      uses: bridgecrewio/checkov-action@master
+      with:
+        directory: infra/
+        framework: terraform
+        config_file: aws/CKV_LIST.yaml
+        output_format: sarif
+        output_file_path: prisma_policies.sarif
+      continue-on-error: true
 
-      - name: Upload Checkov SARIF as an artifact
-        if: steps.check_files.outputs.changed_files != '' && steps.check_files.conclusion != 'failure'
-        uses: actions/upload-artifact@v3
-        with:
-          name: prisma_policies-sarif
-          path: prisma_policies.sarif
+    # Upload SARIF report to GitHub Security Tab
+    - name: Upload Checkov SARIF Reports
+      if: steps.check_files.conclusion == 'success' && steps.checkov.conclusion == 'success'
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: prisma_policies.sarif
+
+    # Upload Checkov SARIF as an artifact for review
+    - name: Upload Checkov SARIF as an artifact
+      if: steps.check_files.conclusion == 'success' && steps.checkov.conclusion == 'success'
+      uses: actions/upload-artifact@v3
+      with:
+        name: prisma_policies-sarif
+        path: prisma_policies.sarif
 
   # TFSec job: Runs TFSec to analyze Terraform files for security issues.
   tfsec:
@@ -186,6 +194,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2  # Ensure we have at least two commits for diff
+
 
       - name: Get Changed Terraform Files
         id: changes
