@@ -9,17 +9,20 @@ permissions:
   contents: write
   security-events: write  # Ensure the action can upload SARIF results
 
-
 jobs:
-  wait_for_verification:
+  trigger-approval:
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for manual verification
-        run: echo "Waiting for manual verification..."
-        # This step will just hold the place for manual verification
+      - name: Trigger manual approval
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          event-type: manual-approval
+
   tflint:
     runs-on: ubuntu-latest
+    needs: trigger-approval
     permissions: write-all
+    needs: approve
 
     steps:
       - name: Checkout source code
