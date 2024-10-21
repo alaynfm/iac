@@ -246,6 +246,7 @@ jobs:
           else
             echo "No SARIF files to process."
             exit 0  # Exit successfully if no SARIF files exist.
+          fi
 
       # Upload the converted issues to SonarQube if SARIF conversion was successful.
       - name: Upload Issues to SonarQube
