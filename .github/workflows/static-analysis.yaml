@@ -123,6 +123,8 @@ jobs:
           SONAR_HOST_URL: http://sonarqube:9000
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  # Use secrets for tokens
         run: |
+          echo $SONAR_TOKEN
+          echo "asd"
           sonar-scanner \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.host.url=$SONAR_HOST_URL \
