@@ -119,9 +119,7 @@ resource "aws_db_instance" "postgres" {
   tags = {
     Name = "${var.project_name}-postgres-db"
   }
-
-
-
+  
   depends_on = [
     aws_db_parameter_group.custom_postgres_params,
     aws_secretsmanager_secret.rds_password,
