@@ -66,11 +66,6 @@ jobs:
           output_format: sarif
           output_file_path: prisma_policies.sarif
         continue-on-error: true
-        env:
-          CKV_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          CKV_OPENAI_MAX_FINDINGS: 5
-          CKV_OPENAI_MAX_TOKENS: 512
-          CKV_OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
 
 
       - name: Upload Checkov SARIF Reports
@@ -119,8 +114,8 @@ jobs:
     needs: tflint
     env:
       SONAR_PROJECT_KEY: techFriday
-      SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST_URL }}
-      SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+      SONAR_HOST_URL: http://sonarqube:9000
+      SONAR_TOKEN: sqp_3d95625f169452b1201b1d7353c9b28e1276a67d
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -128,9 +123,9 @@ jobs:
       - name: Run SonarQube Analysis
         run: |
           sonar-scanner \∫
-            -Dsonar.projectKey=techFriday \
-            -Dsonar.sources=infra \
+            -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.working.directory=/home/docker/.scannerwork
 
@@ -141,8 +136,8 @@ jobs:
     needs: [tflint, checkov, tfsec, sonarqube]
     env:
       SONAR_PROJECT_KEY: techFriday
-      SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST_URL }}
-      SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+      SONAR_HOST_URL: http://sonarqube:9000
+      SONAR_TOKEN: sqp_3d95625f169452b1201b1d7353c9b28e1276a67d
       
     steps:
       - name: Checkout Code
