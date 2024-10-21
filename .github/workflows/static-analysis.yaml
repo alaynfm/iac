@@ -95,7 +95,7 @@ jobs:
   checkov:
     name: 'CHECKOV'
     runs-on: ubuntu-latest
-    needs: tflint
+    needs: [tflint, secret-scan]
 
     steps:
       - name: Checkout Code
@@ -139,7 +139,7 @@ jobs:
   tfsec:
     name: TFSEC
     runs-on: ubuntu-latest
-    needs: tflint
+    needs: [tflint, secret-scan]
 
     steps:
       - name: Checkout Code
@@ -183,7 +183,7 @@ jobs:
   sonarqube:
     name: "SONAR"
     runs-on: self-hosted
-    needs: tflint
+    needs: [tflint, secret-scan]
 
     steps:
       - name: Checkout Code
@@ -204,7 +204,7 @@ jobs:
   sonarqubeRepo:
     name: "GATHER ALL"
     runs-on: self-hosted
-    needs: [tflint, checkov, tfsec, sonarqube]
+    needs: [checkov, tfsec, sonarqube]
     env:
       SONAR_PROJECT_KEY: techFriday
       SONAR_HOST_URL: http://sonarqube:9000
