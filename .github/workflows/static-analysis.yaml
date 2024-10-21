@@ -4,11 +4,19 @@ on:
   push:
     branches-ignore:
       - dev
+  workflow_dispatch:    
 permissions:
   contents: write
-  security-events: write  # Ensure the action can upload SARIF results    
+  security-events: write  # Ensure the action can upload SARIF results
+
 
 jobs:
+  wait_for_verification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for manual verification
+        run: echo "Waiting for manual verification..."
+        # This step will just hold the place for manual verification
   tflint:
     runs-on: ubuntu-latest
     permissions: write-all
