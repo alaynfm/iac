@@ -169,6 +169,10 @@ jobs:
           python3 sarifToSonar.py
 
       - name: Upload Issues to SonarQube
+        env:
+          SONAR_PROJECT_KEY: techFriday
+          SONAR_HOST_URL: http://sonarqube:9000
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}  # Use secrets for tokens
         run: |
           ls -lias
           sonar-scanner \

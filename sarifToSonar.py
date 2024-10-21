@@ -1,23 +1,20 @@
 import json
-import re
+import os
 
-
-def convert_to_sonar_format(sarif_file, output_file, engine_id):
+def convert_to_sonar_format(sarif_file):
     with open(sarif_file, 'r') as f:
         sarif_data = json.load(f)
 
-    sonar_output = {
-        "issues": []
-    }
+    sonar_issues = []
 
     for run in sarif_data.get("runs", []):
+        # Extract tool name from SARIF file
+        engine_id = run.get("tool", {}).get("driver", {}).get("name", "unknown_tool")
+        
         for result in run.get("results", []):
             rule_id = result.get("ruleId", "")
             message = result.get("message", {}).get("text", "")
-            file_path = result.get("locations", [])[0].get("physicalLocation", {}).get("artifactLocation", {}).get("uri", "")
-
-            # Classify based on patterns
-            issue_type = "CODE_SMELL"
+            issue_type = "CODE_SMELL"  # Default issue type
 
             for location in result.get("locations", []):
                 severity = result.get("level", "WARNING").upper()
@@ -28,7 +25,7 @@ def convert_to_sonar_format(sarif_file, output_file, engine_id):
                     "engineId": engine_id,
                     "ruleId": rule_id,
                     "severity": severity,
-                    "type": issue_type,  # Set issue type to VULNERABILITY, BUG, or CODE_SMELL. It is going to be deprecated
+                    "type": issue_type,
                     "primaryLocation": {
                         "message": message,
                         "filePath": location.get("physicalLocation", {}).get("artifactLocation", {}).get("uri", ""),
@@ -38,10 +35,29 @@ def convert_to_sonar_format(sarif_file, output_file, engine_id):
                         }
                     }
                 }
-                sonar_output["issues"].append(issue_data)
+                sonar_issues.append(issue_data)
 
+    return sonar_issues
+
+def analyze_all_sarif_files_in_current_directory(output_file):
+    all_issues = {
+        "issues": []
+    }
+
+    # Get the current directory where the script is located
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+
+    # Iterate over all .sarif files in the current directory
+    for file in os.listdir(current_directory):
+        if file.endswith(".sarif"):
+            file_path = os.path.join(current_directory, file)
+            print(f"Processing {file_path}")
+            issues = convert_to_sonar_format(file_path)
+            all_issues["issues"].extend(issues)
+
+    # Write all issues to the final output file
     with open(output_file, 'w') as f:
-        json.dump(sonar_output, f, indent=2)
+        json.dump(all_issues, f, indent=2)
 
-# Convert SARIF files to SonarQube-compatible format with pattern-based classification
-convert_to_sonar_format('results_sarif.sarif', 'checkov-sonarqube.json', 'checkov')
+# Convert all SARIF files in the current directory to SonarQube-compatible format and combine into one output file
+analyze_all_sarif_files_in_current_directory('all.json')
