@@ -112,15 +112,16 @@ jobs:
     name: "SONAR"
     runs-on: self-hosted
     needs: tflint
-    env:
-      SONAR_PROJECT_KEY: techFriday
-      SONAR_HOST_URL: http://sonarqube:9000
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  # Use secrets for tokens
+    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: Run SonarQube Analysis
+        env:
+          SONAR_PROJECT_KEY: techFriday
+          SONAR_HOST_URL: http://sonarqube:9000
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  # Use secrets for tokens
         run: |
           sonar-scanner \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
