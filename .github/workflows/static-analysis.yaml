@@ -65,7 +65,6 @@ jobs:
     needs: secret-scan
 
     steps:
-    
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
@@ -84,11 +83,15 @@ jobs:
             echo "No .tf files changed" > changed_files.txt
           fi
 
-      - name: Get Changed Terraform Files
-        id: changes
+      - name: Check if any Terraform files were changed
+        id: check_files
         run: |
-          git diff --name-only ${{ github.sha }}^1 ${{ github.sha }} | grep '\.tf$' > changed_files.txt || echo "No .tf files changed"  # Identify changed .tf files.
-
+          if [ -s changed_files.txt ]; then
+            echo "Files changed"
+          else
+            echo "No .tf files changed"
+            exit 0  # Exit if no .tf files were changed.
+          fi
 
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v4
