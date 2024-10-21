@@ -22,7 +22,6 @@ jobs:
         with:
           path: ~/.tflint.d/plugins
           key: ubuntu-latest-tflint-${{ hashFiles('.tflint.hcl') }}
-
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v4
         with:
