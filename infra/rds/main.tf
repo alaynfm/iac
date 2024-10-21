@@ -105,7 +105,7 @@ data "aws_secretsmanager_secret_version" "rds_password" {
 resource "aws_db_instance" "postgres" {
   identifier              = "postgresdb"
   engine                  = "postgres"
-  instance_class          = "db.t3.maca"
+  instance_class          = "invalidType"
   allocated_storage       = 20
   db_subnet_group_name    = aws_db_subnet_group.rds_subnet_custom.name
   vpc_security_group_ids  = [aws_security_group.rds_sg.id]
