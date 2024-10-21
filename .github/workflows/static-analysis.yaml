@@ -73,7 +73,6 @@ jobs:
           CKV_OPENAI_MAX_TOKENS: 512
           CKV_OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
 
-
       - name: Upload Checkov SARIF Reports
         uses: github/codeql-action/upload-sarif@v3
         with:
